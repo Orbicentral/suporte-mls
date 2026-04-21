@@ -54,17 +54,6 @@
   .chart-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 1rem; }
   .chart-wrap { position: relative; height: 200px; }
 
-  .ai-section { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
-  .ai-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-  .ai-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; display: flex; align-items: center; gap: 8px; }
-  .ai-dot { width: 8px; height: 8px; background: #2E7D32; border-radius: 50%; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
-  .ai-btn { background: var(--red); border: none; border-radius: 8px; color: #fff; font-family: inherit; font-size: 12px; font-weight: 600; padding: 7px 14px; cursor: pointer; }
-  .ai-btn:hover { background: var(--red-mid); }
-  .ai-btn:disabled { background: var(--faint); cursor: not-allowed; }
-  .ai-output { font-size: 13px; color: var(--text); line-height: 1.8; white-space: pre-wrap; }
-  .ai-placeholder { color: var(--faint); font-style: italic; font-size: 13px; }
-
   .table-section { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
   .table-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border2); }
   .table-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
@@ -137,16 +126,6 @@
         <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
       </div>
     </div>
- 
-    <div class="ai-section">
-      <div class="ai-header">
-        <div class="ai-title"><div class="ai-dot"></div> Análise com IA</div>
-        <button class="ai-btn" id="aiBtn" onclick="runAI()">✦ Analisar agora</button>
-      </div>
-      <div class="ai-output" id="aiOutput">
-        <span class="ai-placeholder">Clique em "Analisar agora" para gerar um relatório inteligente dos chamados.</span>
-      </div>
-    </div>
 
     <div class="table-section">
       <div class="table-header"><div class="table-title">Chamados recentes (últimos 50) — clique num chamado para análise individual</div></div>
@@ -165,16 +144,14 @@
   </div>
 </div>
 
-<!-- Modal análise de caso -->
-<div id="caseModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem;">
+<!-- Modal detalhes do caso -->
+<div id="caseModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:1rem;">
   <div style="background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;padding:1.5rem;box-shadow:0 8px 48px rgba(0,0,0,.15);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7B1818;" id="modalProtocolo"></div>
       <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">×</button>
     </div>
-    <div id="modalInfo" style="background:#F4F4F2;border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:13px;line-height:1.8;color:#444;"></div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;background:#2E7D32;border-radius:50%;display:inline-block;animation:pulse 2s infinite;"></span>Análise da IA</div>
-    <div id="modalAI" style="font-size:13px;color:#333;line-height:1.8;white-space:pre-wrap;min-height:60px;"><span style="color:#999;font-style:italic;">Analisando...</span></div>
+    <div id="modalInfo" style="background:#F4F4F2;border-radius:8px;padding:1rem;font-size:13px;line-height:1.8;color:#444;"></div>
   </div>
 </div>
 
@@ -182,24 +159,6 @@
 const PASSWORD  = 'Adm1nMLS@';
 const SHEET_ID  = '1cRN62aW6CKCS0YRU3OG9MY0f-Mu91mNpJVHhJzEi4pU';
 const CSV_URL   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSYVC9T0196LjhTLlZqAeqyGpkgo-WmM4VNY3wP06wkodLVk8Dn5CureBkaeBtznAdorshDJVQwU3Ov/pub?gid=521540155&single=true&output=csv';
-const API_KEY   = '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';
-
-let allRows = [], chartTipo, chartStatus;
-
-async function callClaude(prompt) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
-  });
-  const data = await res.json();
-  return data.content?.find(c => c.type === 'text')?.text || 'Sem resposta.';
-}
 
 function tryLogin() {
   if (document.getElementById('pwdInput').value === PASSWORD) {
@@ -297,7 +256,7 @@ function renderTable() {
   document.getElementById('mainTable').style.display = 'table';
 }
 
-async function openCase(r) {
+function openCase(r) {
   const modal = document.getElementById('caseModal');
   modal.style.display = 'flex';
   document.getElementById('modalProtocolo').textContent = '🔖 ' + (r[0]||'Sem protocolo');
@@ -308,35 +267,11 @@ async function openCase(r) {
     <b>Detalhes:</b> ${r[7]||'—'}<br>
     <b>Etapa/Quando:</b> ${r[8]||'—'} &nbsp;|&nbsp; <b>Dispositivo:</b> ${r[9]||'—'}<br>
     ${r[10] ? `<b>Pagamento:</b> ${r[10]}<br>` : ''}
-    ${r[12] ? `<b>URL:</b> ${r[12]}<br>` : ''}
+    ${r[12] ? `<b>URL:</b> <a href="https://${r[12]}" target="_blank" style="color:#7B1818">${r[12]}</a><br>` : ''}
     ${r[13] ? `<b>Obs:</b> ${r[13]}<br>` : ''}
+    ${r[14] ? `<b>Prints:</b> ${r[14].split(' | ').map((u,i)=>`<a href="${u}" target="_blank" style="color:#7B1818">🖼 ${i+1}</a>`).join(' ')}<br>` : ''}
     <b>Status atual:</b> ${r[15]||'—'}
   `;
-  document.getElementById('modalAI').innerHTML = '<span style="color:#999;font-style:italic;">Analisando...</span>';
-  try {
-    const resposta = await callClaude(`Você é analista de suporte da Mentoria Lei Seca, plataforma de cursos jurídicos. Analise este chamado específico e dê uma resposta direta para a gestora.
-
-Protocolo: ${r[0]}
-Aluno: ${r[2]} (${r[5]})
-Problema: ${r[6]}
-Detalhes: ${r[7]}
-Etapa/Quando: ${r[8]}
-Dispositivo: ${r[9]}
-Pagamento: ${r[10]||'N/A'}
-URL: ${r[12]||'N/A'}
-Observação: ${r[13]||'N/A'}
-Status: ${r[15]}
-
-Responda com:
-1. O que provavelmente causou esse problema
-2. Como resolver (passo a passo para a equipe)
-3. Prioridade: Urgente / Normal / Baixa
-
-Seja direta e prática.`);
-    document.getElementById('modalAI').textContent = resposta;
-  } catch(e) {
-    document.getElementById('modalAI').textContent = 'Erro ao analisar. Tente novamente.';
-  }
 }
 
 function closeModal() {
@@ -344,32 +279,6 @@ function closeModal() {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-async function runAI() {
-  const btn = document.getElementById('aiBtn'), out = document.getElementById('aiOutput');
-  if (!allRows.length) { out.textContent = 'Nenhum dado para analisar.'; return; }
-  btn.disabled = true; btn.textContent = '✦ Analisando...';
-  out.innerHTML = '<span class="ai-placeholder">A IA está analisando os chamados...</span>';
-  const resumo = allRows.map(r => `[${r[0]}] ${r[1]?.slice(0,10)} | ${r[2]} | TipoAluno: ${r[5]} | Problema: ${r[6]} | Detalhes: ${r[7]} | Status: ${r[15]}`).join('\n');
-  try {
-    const resposta = await callClaude(`Você é analista de suporte da Mentoria Lei Seca, plataforma de cursos jurídicos. Analise estes chamados e gere um relatório executivo em português para a gestora.
-
-Total: ${allRows.length} | Novos: ${allRows.filter(r=>r[15]==='Novo').length} | Resolvidos: ${allRows.filter(r=>r[15]==='Resolvido').length}
-
-${resumo}
-
-Gere um relatório com:
-1. Resumo geral (2-3 linhas)
-2. Principais problemas encontrados
-3. Se são pontuais ou recorrentes
-4. Alertas de padrões preocupantes (se houver)
-5. Próxima ação prioritária
-
-Seja direta e objetiva.`);
-    out.textContent = resposta;
-  } catch(e) { out.textContent = 'Erro ao conectar com a IA. Verifique a chave de API.'; }
-  btn.disabled = false; btn.textContent = '✦ Analisar novamente';
-}
 </script>
 </body>
 </html>
