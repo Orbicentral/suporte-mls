@@ -6,80 +6,73 @@
 <title>Dashboard Suporte — Lei Seca</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --red: #7B1818; --red-mid: #A52020; --red-light: #F5E6E6; --red-pale: #FDF5F5;
-    --bg: #F4F4F2; --surface: #FFFFFF; --surface2: #F7F7F5;
-    --border: rgba(0,0,0,0.07); --border2: rgba(0,0,0,0.12);
-    --text: #1A1A1A; --muted: #666; --faint: #999;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
-
-  .login-screen { display: flex; align-items: center; justify-content: min-height: 100vh; padding: 1rem; background: var(--bg); min-height: 100vh; justify-content: center; }
-  .login-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 2.5rem 2rem; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,.06); }
-  .login-brand { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #C0392B; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-  .login-brand::before { content: ''; width: 8px; height: 8px; background: #C0392B; border-radius: 50%; }
-  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-  .login-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.75rem; }
-  .login-card input { width: 100%; background: var(--surface2); border: 1.5px solid var(--border2); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; padding: 12px 14px; outline: none; margin-bottom: 12px; }
-  .login-card input:focus { border-color: var(--red-mid); }
-  .login-btn { width: 100%; padding: 13px; background: var(--red); border: none; border-radius: 8px; color: #fff; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-  .login-btn:hover { background: var(--red-mid); }
-  .login-err { font-size: 12px; color: #e74c3c; margin-top: 8px; display: none; }
-
-  .dash { display: none; }
-  .topbar { background: var(--surface); border-bottom: 1px solid var(--border2); padding: 0 1.5rem; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
-  .topbar-brand { display: flex; align-items: center; gap: 8px; }
-  .topbar-dot { width: 8px; height: 8px; background: #C0392B; border-radius: 50%; }
-  .topbar-name { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--red); }
-  .topbar-right { display: flex; align-items: center; gap: 12px; }
-  .refresh-btn { background: var(--surface2); border: 1.5px solid var(--border2); border-radius: 8px; color: var(--muted); font-family: inherit; font-size: 12px; padding: 6px 12px; cursor: pointer; }
-  .refresh-btn:hover { border-color: var(--red-mid); color: var(--red); }
-  .last-update { font-size: 11px; color: var(--faint); }
-
-  .main { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
-
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
-  .card { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
-  .card-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
-  .card-value { font-size: 28px; font-weight: 700; line-height: 1; color: var(--text); }
-  .card-sub { font-size: 11px; color: var(--faint); margin-top: 4px; }
-  .card.red   { border-color: rgba(192,57,43,.2);  background: #FDF5F5; } .card.red   .card-value { color: #C0392B; }
-  .card.green { border-color: rgba(46,125,50,.2);  background: #F1F8F1; } .card.green .card-value { color: #2E7D32; }
-  .card.amber { border-color: rgba(180,83,9,.2);   background: #FFF8F0; } .card.amber .card-value { color: #B45309; }
-  .card.blue  { border-color: rgba(21,101,192,.2); background: #F0F5FD; } .card.blue  .card-value { color: #1565C0; }
-
-  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
-  .chart-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
-  .chart-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 1rem; }
-  .chart-wrap { position: relative; height: 200px; }
-
-  .table-section { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
-  .table-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border2); }
-  .table-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { padding: 10px 12px; text-align: left; color: var(--faint); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 10px; border-bottom: 1px solid var(--border2); background: var(--surface2); }
-  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--red-pale); }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; white-space: nowrap; }
-  .badge-novo       { background: #FCE4E4; color: #B71C1C; }
-  .badge-analise    { background: #FFF8E1; color: #E65100; }
-  .badge-aguardando { background: #E3F2FD; color: #1565C0; }
-  .badge-resolvido  { background: #E8F5E9; color: #2E7D32; }
-  .badge-cancelado  { background: #F5F5F5; color: #888;    }
-  .link-cell { color: var(--red); text-decoration: none; font-size: 11px; font-weight: 600; }
-  .link-cell:hover { text-decoration: underline; }
-  .empty, .loading { text-align: center; padding: 3rem; color: var(--faint); font-size: 13px; }
-
-  @media (max-width: 600px) {
-    .charts { grid-template-columns: 1fr; }
-    .cards  { grid-template-columns: 1fr 1fr; }
-    .main   { padding: 1rem; }
-    .topbar { padding: 0 1rem; }
-    .last-update { display: none; }
-  }
+:root {
+  --red:#7B1818; --red-mid:#A52020; --red-pale:#FDF5F5; --red-light:#F5E6E6;
+  --bg:#F4F4F2; --surface:#fff; --surface2:#F7F7F5;
+  --border:rgba(0,0,0,.07); --border2:rgba(0,0,0,.12);
+  --text:#1A1A1A; --muted:#666; --faint:#999;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-card{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:2.5rem 2rem;width:100%;max-width:380px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.login-brand{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#C0392B;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px}
+.login-brand::before{content:'';width:8px;height:8px;background:#C0392B;border-radius:50%}
+.login-card h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.login-card p{font-size:13px;color:var(--muted);margin-bottom:1.75rem}
+.login-card input{width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;padding:12px 14px;outline:none;margin-bottom:12px;transition:border-color .15s}
+.login-card input:focus{border-color:var(--red-mid)}
+.login-btn{width:100%;padding:13px;background:var(--red);border:none;border-radius:8px;color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.login-btn:hover{background:var(--red-mid)}
+.login-err{font-size:12px;color:#e74c3c;margin-top:8px;display:none}
+.dash{display:none}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border2);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.topbar-dot{width:8px;height:8px;background:#C0392B;border-radius:50%}
+.topbar-name{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.last-update{font-size:11px;color:var(--faint)}
+.refresh-btn{background:var(--surface2);border:1.5px solid var(--border2);border-radius:8px;color:var(--muted);font-family:inherit;font-size:12px;padding:6px 12px;cursor:pointer}
+.refresh-btn:hover{border-color:var(--red-mid);color:var(--red)}
+.main{padding:1.5rem;max-width:1100px;margin:0 auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:1.5rem}
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:1rem 1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.card-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.card-value{font-size:28px;font-weight:700;line-height:1;color:var(--text)}
+.card.red{border-color:rgba(192,57,43,.2);background:#FDF5F5} .card.red .card-value{color:#C0392B}
+.card.green{border-color:rgba(46,125,50,.2);background:#F1F8F1} .card.green .card-value{color:#2E7D32}
+.card.amber{border-color:rgba(180,83,9,.2);background:#FFF8F0} .card.amber .card-value{color:#B45309}
+.card.blue{border-color:rgba(21,101,192,.2);background:#F0F5FD} .card.blue .card-value{color:#1565C0}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+.chart-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.chart-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1rem}
+.chart-wrap{position:relative;height:200px}
+.table-section{background:var(--surface);border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.table-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border2)}
+.table-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:10px 12px;text-align:left;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:10px;border-bottom:1px solid var(--border2);background:var(--surface2)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--red-pale);cursor:pointer}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.badge-novo{background:#FCE4E4;color:#B71C1C}
+.badge-analise{background:#FFF8E1;color:#E65100}
+.badge-aguardando{background:#E3F2FD;color:#1565C0}
+.badge-resolvido{background:#E8F5E9;color:#2E7D32}
+.badge-cancelado{background:#F5F5F5;color:#888}
+.link-cell{color:var(--red);text-decoration:none;font-size:11px;font-weight:600}
+.link-cell:hover{text-decoration:underline}
+.empty,.loading{text-align:center;padding:3rem;color:var(--faint);font-size:13px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:1rem}
+.modal-box{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;padding:1.5rem;box-shadow:0 8px 48px rgba(0,0,0,.15)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.modal-proto{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7B1818}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#999;line-height:1}
+.modal-body{background:#F4F4F2;border-radius:8px;padding:1rem;font-size:13px;line-height:1.9;color:#444}
+.modal-body b{color:#333}
+@media(max-width:600px){.charts{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}.main{padding:1rem}.topbar{padding:0 1rem}.last-update{display:none}}
 </style>
 </head>
 <body>
@@ -89,7 +82,7 @@
     <div class="login-brand">Central de Suporte</div>
     <h1>Dashboard</h1>
     <p>Mentoria Lei Seca — Área Administrativa</p>
-    <input type="password" id="pwdInput" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter') tryLogin()" />
+    <input type="password" id="pwdInput" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')tryLogin()">
     <button class="login-btn" onclick="tryLogin()">Entrar</button>
     <p class="login-err" id="loginErr">Senha incorreta.</p>
   </div>
@@ -97,7 +90,7 @@
 
 <div class="dash" id="dashboard">
   <div class="topbar">
-    <div class="topbar-brand">
+    <div class="topbar-left">
       <div class="topbar-dot"></div>
       <span class="topbar-name">Suporte — Lei Seca</span>
     </div>
@@ -106,62 +99,53 @@
       <button class="refresh-btn" onclick="loadData()">↻ Atualizar</button>
     </div>
   </div>
-
   <div class="main">
     <div class="cards">
-      <div class="card">      <div class="card-label">Total</div>       <div class="card-value" id="cTotal">—</div>    </div>
-      <div class="card red">  <div class="card-label">Novos</div>        <div class="card-value" id="cNovos">—</div>    </div>
-      <div class="card amber"><div class="card-label">Em análise</div>   <div class="card-value" id="cAnalise">—</div>  </div>
-      <div class="card green"><div class="card-label">Resolvidos</div>   <div class="card-value" id="cResolvidos">—</div></div>
-      <div class="card blue"> <div class="card-label">Alunos novos</div> <div class="card-value" id="cAlunosNovos">—</div></div>
+      <div class="card">       <div class="card-label">Total</div>        <div class="card-value" id="cTotal">—</div></div>
+      <div class="card red">   <div class="card-label">Novos</div>         <div class="card-value" id="cNovos">—</div></div>
+      <div class="card amber"> <div class="card-label">Em análise</div>    <div class="card-value" id="cAnalise">—</div></div>
+      <div class="card green"> <div class="card-label">Resolvidos</div>    <div class="card-value" id="cResolvidos">—</div></div>
+      <div class="card blue">  <div class="card-label">Alunos novos</div>  <div class="card-value" id="cNovos2">—</div></div>
     </div>
-
     <div class="charts">
-      <div class="chart-card">
-        <div class="chart-title">Problemas por tipo</div>
-        <div class="chart-wrap"><canvas id="chartTipo"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Status dos chamados</div>
-        <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
-      </div>
+      <div class="chart-card"><div class="chart-title">Problemas por tipo</div><div class="chart-wrap"><canvas id="chartTipo"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Status dos chamados</div><div class="chart-wrap"><canvas id="chartStatus"></canvas></div></div>
     </div>
-
     <div class="table-section">
-      <div class="table-header"><div class="table-title">Chamados recentes (últimos 50) — clique num chamado para análise individual</div></div>
+      <div class="table-header"><div class="table-title">Chamados recentes — clique para ver detalhes</div></div>
       <div class="table-wrap">
-        <div class="loading" id="tableLoading">Carregando dados...</div>
-        <table id="mainTable" style="display:none">
+        <div class="loading" id="tLoading">Carregando...</div>
+        <div class="empty" id="tEmpty" style="display:none">Nenhum chamado encontrado.</div>
+        <table id="tTable" style="display:none">
           <thead><tr>
-            <th>Protocolo</th><th>Data</th><th>Nome</th><th>Tipo aluno</th>
+            <th>Protocolo</th><th>Data</th><th>Nome</th><th>Tipo</th>
             <th>Problema</th><th>Detalhes</th><th>URL</th><th>Prints</th><th>Status</th>
           </tr></thead>
-          <tbody id="tableBody"></tbody>
+          <tbody id="tBody"></tbody>
         </table>
-        <div class="empty" id="tableEmpty" style="display:none">Nenhum chamado encontrado.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal detalhes do caso -->
-<div id="caseModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:1rem;">
-  <div style="background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;padding:1.5rem;box-shadow:0 8px 48px rgba(0,0,0,.15);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7B1818;" id="modalProtocolo"></div>
-      <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">×</button>
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-proto" id="mProto"></span>
+      <button class="modal-close" onclick="closeModal()">×</button>
     </div>
-    <div id="modalInfo" style="background:#F4F4F2;border-radius:8px;padding:1rem;font-size:13px;line-height:1.8;color:#444;"></div>
+    <div class="modal-body" id="mBody"></div>
   </div>
 </div>
 
 <script>
-const PASSWORD  = 'Adm1nMLS@';
-const SHEET_ID  = '1cRN62aW6CKCS0YRU3OG9MY0f-Mu91mNpJVHhJzEi4pU';
-const CSV_URL   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSYVC9T0196LjhTLlZqAeqyGpkgo-WmM4VNY3wP06wkodLVk8Dn5CureBkaeBtznAdorshDJVQwU3Ov/pub?gid=521540155&single=true&output=csv';
+const PWD = 'Adm1nMLS@';
+const CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSYVC9T0196LjhTLlZqAeqyGpkgo-WmM4VNY3wP06wkodLVk8Dn5CureBkaeBtznAdorshDJVQwU3Ov/pub?gid=521540155&single=true&output=csv';
+
+let rows = [], ct, cs;
 
 function tryLogin() {
-  if (document.getElementById('pwdInput').value === PASSWORD) {
+  if (document.getElementById('pwdInput').value === PWD) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     loadData();
@@ -171,114 +155,132 @@ function tryLogin() {
 }
 
 async function loadData() {
-  document.getElementById('tableLoading').style.display = 'block';
-  document.getElementById('mainTable').style.display = 'none';
-  document.getElementById('tableEmpty').style.display = 'none';
+  document.getElementById('tLoading').style.display = 'block';
+  document.getElementById('tTable').style.display = 'none';
+  document.getElementById('tEmpty').style.display = 'none';
   try {
-    const res  = await fetch(CSV_URL + '&t=' + Date.now());
-    const text = await res.text();
-    const rows = parseCSV(text);
-    allRows = rows.slice(1).filter(r => r[0] && r[0] !== '');
-    if (!allRows.length) { document.getElementById('tableEmpty').style.display = 'block'; document.getElementById('tableLoading').style.display = 'none'; return; }
+    const r = await fetch(CSV + '&nc=' + Date.now());
+    const txt = await r.text();
+    rows = parseCSV(txt).slice(1).filter(r => r.length > 1 && r[0]);
+    if (!rows.length) {
+      document.getElementById('tLoading').style.display = 'none';
+      document.getElementById('tEmpty').style.display = 'block';
+      return;
+    }
     renderCards(); renderCharts(); renderTable();
     document.getElementById('lastUpdate').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
   } catch(e) {
-    document.getElementById('tableLoading').textContent = 'Erro ao carregar. Verifique se a planilha está pública.';
+    document.getElementById('tLoading').textContent = 'Erro ao carregar. Verifique se a planilha está pública.';
   }
 }
 
-function parseCSV(text) {
-  return text.split('\n').map(line => {
-    const row = []; let inQ = false, cell = '';
-    for (const c of line) {
-      if (c === '"') { inQ = !inQ; }
-      else if (c === ',' && !inQ) { row.push(cell.trim()); cell = ''; }
-      else { cell += c; }
+function parseCSV(txt) {
+  const results = [];
+  const lines = txt.replace(/\r/g, '').split('\n');
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const row = []; let cell = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; continue; }
+      if (c === ',' && !inQ) { row.push(cell); cell = ''; continue; }
+      cell += c;
     }
-    row.push(cell.trim()); return row;
-  });
+    row.push(cell);
+    results.push(row);
+  }
+  return results;
 }
 
 function renderCards() {
-  document.getElementById('cTotal').textContent       = allRows.length;
-  document.getElementById('cNovos').textContent       = allRows.filter(r => (r[15]||'') === 'Novo').length;
-  document.getElementById('cAnalise').textContent     = allRows.filter(r => (r[15]||'').includes('análise')).length;
-  document.getElementById('cResolvidos').textContent  = allRows.filter(r => (r[15]||'') === 'Resolvido').length;
-  document.getElementById('cAlunosNovos').textContent = allRows.filter(r => (r[5]||'').toLowerCase().includes('novo')).length;
+  const novo = rows.filter(r => (r[15]||'') === 'Novo').length;
+  const analise = rows.filter(r => (r[15]||'').includes('nálise')).length;
+  const resolvido = rows.filter(r => (r[15]||'') === 'Resolvido').length;
+  const alunoNovo = rows.filter(r => (r[5]||'').toLowerCase().includes('novo')).length;
+  document.getElementById('cTotal').textContent = rows.length;
+  document.getElementById('cNovos').textContent = novo;
+  document.getElementById('cAnalise').textContent = analise;
+  document.getElementById('cResolvidos').textContent = resolvido;
+  document.getElementById('cNovos2').textContent = alunoNovo;
 }
 
 function renderCharts() {
-  const tipoCount = {}, statusCount = {};
-  allRows.forEach(r => {
-    const t = r[6] || 'Outro'; tipoCount[t]   = (tipoCount[t]   || 0) + 1;
-    const s = r[15]|| 'Novo';  statusCount[s] = (statusCount[s] || 0) + 1;
+  const tipo = {}, status = {};
+  rows.forEach(r => {
+    const t = r[6] || 'Outro'; tipo[t] = (tipo[t]||0) + 1;
+    const s = r[15] || 'Novo'; status[s] = (status[s]||0) + 1;
   });
-  if (chartTipo) chartTipo.destroy();
-  chartTipo = new Chart(document.getElementById('chartTipo'), {
+  if (ct) ct.destroy();
+  ct = new Chart(document.getElementById('chartTipo'), {
     type: 'bar',
-    data: { labels: Object.keys(tipoCount).map(l => l.length > 22 ? l.slice(0,22)+'…' : l), datasets: [{ data: Object.values(tipoCount), backgroundColor: '#7B1818', borderRadius: 6, borderSkipped: false }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#999', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#999', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } } } }
+    data: { labels: Object.keys(tipo).map(l => l.length > 20 ? l.slice(0,20)+'…' : l), datasets: [{ data: Object.values(tipo), backgroundColor: '#7B1818', borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#999', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#999', font: { size: 10 }, stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } } } }
   });
-  const colors = { 'Novo': '#e74c3c', 'Em análise': '#F59E0B', 'Aguardando aluno': '#64B5F6', 'Resolvido': '#4CAF50', 'Cancelado': '#666' };
-  if (chartStatus) chartStatus.destroy();
-  chartStatus = new Chart(document.getElementById('chartStatus'), {
+  const colors = { 'Novo': '#e74c3c', 'Em análise': '#F59E0B', 'Aguardando aluno': '#64B5F6', 'Resolvido': '#4CAF50', 'Cancelado': '#aaa' };
+  if (cs) cs.destroy();
+  cs = new Chart(document.getElementById('chartStatus'), {
     type: 'doughnut',
-    data: { labels: Object.keys(statusCount), datasets: [{ data: Object.values(statusCount), backgroundColor: Object.keys(statusCount).map(s => colors[s] || '#888'), borderWidth: 0, hoverOffset: 4 }] },
+    data: { labels: Object.keys(status), datasets: [{ data: Object.values(status), backgroundColor: Object.keys(status).map(s => colors[s]||'#888'), borderWidth: 0, hoverOffset: 4 }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#666', font: { size: 11 }, padding: 12, boxWidth: 12 } } } }
   });
 }
 
 function renderTable() {
-  document.getElementById('tableLoading').style.display = 'none';
-  const body = document.getElementById('tableBody'); body.innerHTML = '';
-  if (!allRows.length) { document.getElementById('tableEmpty').style.display = 'block'; return; }
-  [...allRows].reverse().slice(0, 50).forEach((r, i) => {
+  document.getElementById('tLoading').style.display = 'none';
+  const body = document.getElementById('tBody'); body.innerHTML = '';
+  [...rows].reverse().slice(0, 50).forEach(r => {
     const s = r[15] || 'Novo';
-    const bc = s === 'Novo' ? 'badge-novo' : s === 'Em análise' ? 'badge-analise' : s.includes('Aguard') ? 'badge-aguardando' : s === 'Resolvido' ? 'badge-resolvido' : 'badge-cancelado';
-    const prints = r[14] ? r[14].split(' | ').map((u,i) => `<a href="${u}" target="_blank" class="link-cell" onclick="event.stopPropagation()">🖼 ${i+1}</a>`).join(' ') : '—';
+    const bc = s === 'Novo' ? 'badge-novo' : s.includes('nálise') ? 'badge-analise' : s.includes('guard') ? 'badge-aguardando' : s === 'Resolvido' ? 'badge-resolvido' : 'badge-cancelado';
+    const prints = (r[14]||'') ? r[14].split(' | ').map((u,i) => `<a href="${u}" target="_blank" class="link-cell" onclick="event.stopPropagation()">🖼${i+1}</a>`).join(' ') : '—';
     const tr = document.createElement('tr');
-    tr.style.cursor = 'pointer';
-    tr.title = 'Clique para análise individual';
     tr.innerHTML = `
-      <td style="font-family:monospace;font-size:11px;color:#C0392B;white-space:nowrap">${r[0]||'—'}</td>
+      <td style="font-family:monospace;color:#C0392B;white-space:nowrap;font-size:11px">${r[0]||'—'}</td>
       <td style="color:var(--muted);white-space:nowrap">${(r[1]||'').slice(0,16)}</td>
       <td>${r[2]||'—'}</td>
       <td style="color:var(--muted);font-size:11px">${r[5]||'—'}</td>
-      <td style="color:var(--muted);font-size:11px">${(r[6]||'—').slice(0,28)}</td>
-      <td style="color:var(--muted);font-size:11px">${(r[7]||'—').slice(0,28)}</td>
+      <td style="color:var(--muted);font-size:11px">${(r[6]||'—').slice(0,25)}</td>
+      <td style="color:var(--muted);font-size:11px">${(r[7]||'—').slice(0,25)}</td>
       <td>${r[12] ? `<a href="https://${r[12]}" target="_blank" class="link-cell" onclick="event.stopPropagation()">Ver</a>` : '—'}</td>
       <td>${prints}</td>
       <td><span class="badge ${bc}">${s}</span></td>
     `;
-    tr.addEventListener('click', () => openCase(r));
+    tr.onclick = () => openModal(r);
     body.appendChild(tr);
   });
-  document.getElementById('mainTable').style.display = 'table';
+  document.getElementById('tTable').style.display = 'table';
 }
 
-function openCase(r) {
-  const modal = document.getElementById('caseModal');
-  modal.style.display = 'flex';
-  document.getElementById('modalProtocolo').textContent = '🔖 ' + (r[0]||'Sem protocolo');
-  document.getElementById('modalInfo').innerHTML = `
-    <b>Nome:</b> ${r[2]||'—'} &nbsp;|&nbsp; <b>E-mail:</b> ${r[3]||'—'}<br>
-    <b>Tipo aluno:</b> ${r[5]||'—'} &nbsp;|&nbsp; <b>Data:</b> ${r[1]||'—'}<br>
+function openModal(r) {
+  document.getElementById('mProto').textContent = '🔖 ' + (r[0]||'Sem protocolo');
+  document.getElementById('mBody').innerHTML = `
+    <b>Nome:</b> ${r[2]||'—'}<br>
+    <b>E-mail:</b> ${r[3]||'—'}<br>
+    <b>WhatsApp:</b> ${r[4]||'—'}<br>
+    <b>Tipo de aluno:</b> ${r[5]||'—'}<br>
+    <b>Data:</b> ${r[1]||'—'}<br>
+    <br>
     <b>Problema:</b> ${r[6]||'—'}<br>
     <b>Detalhes:</b> ${r[7]||'—'}<br>
-    <b>Etapa/Quando:</b> ${r[8]||'—'} &nbsp;|&nbsp; <b>Dispositivo:</b> ${r[9]||'—'}<br>
+    <b>Etapa / Quando:</b> ${r[8]||'—'}<br>
+    <b>Dispositivo:</b> ${r[9]||'—'}<br>
     ${r[10] ? `<b>Pagamento:</b> ${r[10]}<br>` : ''}
+    ${r[11] ? `<b>Nº pedido:</b> ${r[11]}<br>` : ''}
     ${r[12] ? `<b>URL:</b> <a href="https://${r[12]}" target="_blank" style="color:#7B1818">${r[12]}</a><br>` : ''}
-    ${r[13] ? `<b>Obs:</b> ${r[13]}<br>` : ''}
-    ${r[14] ? `<b>Prints:</b> ${r[14].split(' | ').map((u,i)=>`<a href="${u}" target="_blank" style="color:#7B1818">🖼 ${i+1}</a>`).join(' ')}<br>` : ''}
-    <b>Status atual:</b> ${r[15]||'—'}
+    ${r[13] ? `<b>Observação:</b> ${r[13]}<br>` : ''}
+    ${r[14] ? `<b>Prints:</b> ${r[14].split(' | ').map((u,i)=>`<a href="${u}" target="_blank" style="color:#7B1818">🖼 Ver print ${i+1}</a>`).join(' &nbsp; ')}<br>` : ''}
+    <br>
+    <b>Status:</b> ${r[15]||'—'}
   `;
+  const m = document.getElementById('modal');
+  m.style.display = 'flex';
 }
 
 function closeModal() {
-  document.getElementById('caseModal').style.display = 'none';
+  document.getElementById('modal').style.display = 'none';
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 </script>
 </body>
 </html>
