@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Suporte — Lei Seca</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --red: #7B1818; --red-mid: #A52020;
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f0; --muted: #888; --faint: #555;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; }
+  .login-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 2.5rem 2rem; width: 100%; max-width: 380px; text-align: center; }
+  .login-brand { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #C0392B; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .login-brand::before { content: ''; width: 8px; height: 8px; background: #C0392B; border-radius: 50%; }
+  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .login-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.75rem; }
+  .login-card input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; padding: 12px 14px; outline: none; margin-bottom: 12px; }
+  .login-card input:focus { border-color: var(--red-mid); }
+  .login-btn { width: 100%; padding: 13px; background: var(--red); border: none; border-radius: 8px; color: #fff; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .login-btn:hover { background: var(--red-mid); }
+  .login-err { font-size: 12px; color: #e74c3c; margin-top: 8px; display: none; }
+
+  .dash { display: none; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-brand { display: flex; align-items: center; gap: 8px; }
+  .topbar-dot { width: 8px; height: 8px; background: #C0392B; border-radius: 50%; }
+  .topbar-name { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .refresh-btn { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--muted); font-family: inherit; font-size: 12px; padding: 6px 12px; cursor: pointer; }
+  .refresh-btn:hover { border-color: var(--red-mid); color: var(--text); }
+  .last-update { font-size: 11px; color: var(--faint); }
+
+  .main { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; }
+  .card-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .card-value { font-size: 28px; font-weight: 700; line-height: 1; }
+  .card-sub { font-size: 11px; color: var(--faint); margin-top: 4px; }
+  .card.red   { border-color: rgba(192,57,43,.3);  background: rgba(123,24,24,.15); } .card.red   .card-value { color: #e74c3c; }
+  .card.green { border-color: rgba(46,125,50,.3);  background: rgba(46,125,50,.1);  } .card.green .card-value { color: #4CAF50; }
+  .card.amber { border-color: rgba(180,83,9,.3);   background: rgba(180,83,9,.1);   } .card.amber .card-value { color: #F59E0B; }
+  .card.blue  { border-color: rgba(21,101,192,.3); background: rgba(21,101,192,.1); } .card.blue  .card-value { color: #64B5F6; }
+
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+  .chart-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 1rem; }
+  .chart-wrap { position: relative; height: 200px; }
+
+  .ai-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .ai-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .ai-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; display: flex; align-items: center; gap: 8px; }
+  .ai-dot { width: 8px; height: 8px; background: #4CAF50; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+  .ai-btn { background: var(--red); border: none; border-radius: 8px; color: #fff; font-family: inherit; font-size: 12px; font-weight: 600; padding: 7px 14px; cursor: pointer; }
+  .ai-btn:hover { background: var(--red-mid); }
+  .ai-btn:disabled { background: var(--faint); cursor: not-allowed; }
+  .ai-output { font-size: 13px; color: var(--text); line-height: 1.8; white-space: pre-wrap; }
+  .ai-placeholder { color: var(--faint); font-style: italic; font-size: 13px; }
+
+  .table-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; }
+  .table-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .table-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { padding: 10px 12px; text-align: left; color: var(--faint); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .badge-novo       { background: rgba(192,57,43,.2);   color: #e74c3c; }
+  .badge-analise    { background: rgba(180,83,9,.2);    color: #F59E0B; }
+  .badge-aguardando { background: rgba(21,101,192,.2);  color: #64B5F6; }
+  .badge-resolvido  { background: rgba(46,125,50,.2);   color: #4CAF50; }
+  .badge-cancelado  { background: rgba(100,100,100,.2); color: #888;    }
+  .link-cell { color: #64B5F6; text-decoration: none; font-size: 11px; }
+  .link-cell:hover { text-decoration: underline; }
+  .empty, .loading { text-align: center; padding: 3rem; color: var(--faint); font-size: 13px; }
+
+  @media (max-width: 600px) {
+    .charts { grid-template-columns: 1fr; }
+    .cards  { grid-template-columns: 1fr 1fr; }
+    .main   { padding: 1rem; }
+    .topbar { padding: 0 1rem; }
+    .last-update { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand">Central de Suporte</div>
+    <h1>Dashboard</h1>
+    <p>Mentoria Lei Seca — Área Administrativa</p>
+    <input type="password" id="pwdInput" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter') tryLogin()" />
+    <button class="login-btn" onclick="tryLogin()">Entrar</button>
+    <p class="login-err" id="loginErr">Senha incorreta.</p>
+  </div>
+</div>
+
+<div class="dash" id="dashboard">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-dot"></div>
+      <span class="topbar-name">Suporte — Lei Seca</span>
+    </div>
+    <div class="topbar-right">
+      <span class="last-update" id="lastUpdate"></span>
+      <button class="refresh-btn" onclick="loadData()">↻ Atualizar</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="cards">
+      <div class="card">      <div class="card-label">Total</div>       <div class="card-value" id="cTotal">—</div>    </div>
+      <div class="card red">  <div class="card-label">Novos</div>        <div class="card-value" id="cNovos">—</div>    </div>
+      <div class="card amber"><div class="card-label">Em análise</div>   <div class="card-value" id="cAnalise">—</div>  </div>
+      <div class="card green"><div class="card-label">Resolvidos</div>   <div class="card-value" id="cResolvidos">—</div></div>
+      <div class="card blue"> <div class="card-label">Alunos novos</div> <div class="card-value" id="cAlunosNovos">—</div></div>
+    </div>
+
+    <div class="charts">
+      <div class="chart-card">
+        <div class="chart-title">Problemas por tipo</div>
+        <div class="chart-wrap"><canvas id="chartTipo"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Status dos chamados</div>
+        <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+      </div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-header">
+        <div class="ai-title"><div class="ai-dot"></div> Análise com IA</div>
+        <button class="ai-btn" id="aiBtn" onclick="runAI()">✦ Analisar agora</button>
+      </div>
+      <div class="ai-output" id="aiOutput">
+        <span class="ai-placeholder">Clique em "Analisar agora" para gerar um relatório inteligente dos chamados.</span>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="table-header"><div class="table-title">Chamados recentes (últimos 50)</div></div>
+      <div class="table-wrap">
+        <div class="loading" id="tableLoading">Carregando dados...</div>
+        <table id="mainTable" style="display:none">
+          <thead><tr>
+            <th>Protocolo</th><th>Data</th><th>Nome</th><th>Tipo aluno</th>
+            <th>Problema</th><th>Detalhes</th><th>URL</th><th>Prints</th><th>Status</th>
+          </tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty" id="tableEmpty" style="display:none">Nenhum chamado encontrado.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PASSWORD  = 'Adm1nMLS@';
+const SHEET_ID  = '1cRN62aW6CKCS0YRU3OG9MY0f-Mu91mNpJVHhJzEi4pU';
+const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+
+let allRows = [], chartTipo, chartStatus;
+
+function tryLogin() {
+  if (document.getElementById('pwdInput').value === PASSWORD) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadData();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+
+async function loadData() {
+  document.getElementById('tableLoading').style.display = 'block';
+  document.getElementById('mainTable').style.display = 'none';
+  document.getElementById('tableEmpty').style.display = 'none';
+  try {
+    const res  = await fetch(CSV_URL + '&t=' + Date.now());
+    const text = await res.text();
+    const rows = parseCSV(text);
+    allRows = rows.slice(1).filter(r => r[0] && r[0] !== '');
+    if (!allRows.length) { document.getElementById('tableEmpty').style.display = 'block'; document.getElementById('tableLoading').style.display = 'none'; return; }
+    renderCards(); renderCharts(); renderTable();
+    document.getElementById('lastUpdate').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
+  } catch(e) {
+    document.getElementById('tableLoading').textContent = 'Erro ao carregar. Verifique se a planilha está pública.';
+  }
+}
+
+function parseCSV(text) {
+  return text.split('\n').map(line => {
+    const row = []; let inQ = false, cell = '';
+    for (const c of line) {
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { row.push(cell.trim()); cell = ''; }
+      else { cell += c; }
+    }
+    row.push(cell.trim()); return row;
+  });
+}
+
+// cols: 0=Protocolo 1=Data 2=Nome 3=Email 4=WhatsApp 5=TipoAluno 6=TipoProblema 7=Detalhes 8=Etapa 9=Dispositivo 10=Pagamento 11=Pedido 12=URL 13=Obs 14=PrintsURLs 15=Status
+
+function renderCards() {
+  document.getElementById('cTotal').textContent       = allRows.length;
+  document.getElementById('cNovos').textContent       = allRows.filter(r => (r[15]||'') === 'Novo').length;
+  document.getElementById('cAnalise').textContent     = allRows.filter(r => (r[15]||'').includes('análise')).length;
+  document.getElementById('cResolvidos').textContent  = allRows.filter(r => (r[15]||'') === 'Resolvido').length;
+  document.getElementById('cAlunosNovos').textContent = allRows.filter(r => (r[5]||'').toLowerCase().includes('novo')).length;
+}
+
+function renderCharts() {
+  const tipoCount = {}, statusCount = {};
+  allRows.forEach(r => {
+    const t = r[6] || 'Outro'; tipoCount[t]   = (tipoCount[t]   || 0) + 1;
+    const s = r[15]|| 'Novo';  statusCount[s] = (statusCount[s] || 0) + 1;
+  });
+
+  if (chartTipo) chartTipo.destroy();
+  chartTipo = new Chart(document.getElementById('chartTipo'), {
+    type: 'bar',
+    data: { labels: Object.keys(tipoCount).map(l => l.length > 22 ? l.slice(0,22)+'…' : l), datasets: [{ data: Object.values(tipoCount), backgroundColor: '#7B1818', borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#666', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#666', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+  });
+
+  const colors = { 'Novo': '#e74c3c', 'Em análise': '#F59E0B', 'Aguardando aluno': '#64B5F6', 'Resolvido': '#4CAF50', 'Cancelado': '#666' };
+  if (chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: { labels: Object.keys(statusCount), datasets: [{ data: Object.values(statusCount), backgroundColor: Object.keys(statusCount).map(s => colors[s] || '#888'), borderWidth: 0, hoverOffset: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#888', font: { size: 11 }, padding: 12, boxWidth: 12 } } } }
+  });
+}
+
+function renderTable() {
+  document.getElementById('tableLoading').style.display = 'none';
+  const body = document.getElementById('tableBody'); body.innerHTML = '';
+  if (!allRows.length) { document.getElementById('tableEmpty').style.display = 'block'; return; }
+  [...allRows].reverse().slice(0, 50).forEach(r => {
+    const s = r[15] || 'Novo';
+    const bc = s === 'Novo' ? 'badge-novo' : s === 'Em análise' ? 'badge-analise' : s.includes('Aguard') ? 'badge-aguardando' : s === 'Resolvido' ? 'badge-resolvido' : 'badge-cancelado';
+    const prints = r[14] ? r[14].split(' | ').map((u,i) => `<a href="${u}" target="_blank" class="link-cell">🖼 ${i+1}</a>`).join(' ') : '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-family:monospace;font-size:11px;color:#C0392B;white-space:nowrap">${r[0]||'—'}</td>
+      <td style="color:var(--muted);white-space:nowrap">${(r[1]||'').slice(0,16)}</td>
+      <td>${r[2]||'—'}</td>
+      <td style="color:var(--muted);font-size:11px">${r[5]||'—'}</td>
+      <td style="color:var(--muted);font-size:11px">${(r[6]||'—').slice(0,28)}</td>
+      <td style="color:var(--muted);font-size:11px">${(r[7]||'—').slice(0,28)}</td>
+      <td>${r[12] ? `<a href="https://${r[12]}" target="_blank" class="link-cell">Ver</a>` : '—'}</td>
+      <td>${prints}</td>
+      <td><span class="badge ${bc}">${s}</span></td>
+    `;
+    body.appendChild(tr);
+  });
+  document.getElementById('mainTable').style.display = 'table';
+}
+
+async function runAI() {
+  const btn = document.getElementById('aiBtn'), out = document.getElementById('aiOutput');
+  if (!allRows.length) { out.textContent = 'Nenhum dado para analisar.'; return; }
+  btn.disabled = true; btn.textContent = '✦ Analisando...';
+  out.innerHTML = '<span class="ai-placeholder">A IA está analisando os chamados...</span>';
+
+  const resumo = allRows.map(r => `[${r[0]}] ${r[1]?.slice(0,10)} | ${r[2]} | TipoAluno: ${r[5]} | Problema: ${r[6]} | Detalhes: ${r[7]} | Status: ${r[15]}`).join('\n');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: `Você é analista de suporte da Mentoria Lei Seca, plataforma de cursos jurídicos. Analise estes chamados e gere um relatório executivo em português para a gestora da empresa.
+
+Total: ${allRows.length} | Novos: ${allRows.filter(r=>r[15]==='Novo').length} | Resolvidos: ${allRows.filter(r=>r[15]==='Resolvido').length}
+
+${resumo}
+
+Gere um relatório com:
+1. Resumo geral (2-3 linhas)
+2. Principais problemas encontrados
+3. Se são pontuais ou recorrentes
+4. Alertas de padrões preocupantes (se houver)
+5. Próxima ação prioritária
+
+Seja direta e objetiva.` }]
+      })
+    });
+    const data = await res.json();
+    out.textContent = data.content?.find(c => c.type === 'text')?.text || 'Sem resposta da IA.';
+  } catch(e) { out.textContent = 'Erro ao conectar com a IA.'; }
+  btn.disabled = false; btn.textContent = '✦ Analisar novamente';
+}
+</script>
+</body>
+</html>
